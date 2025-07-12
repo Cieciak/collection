@@ -24,6 +24,8 @@ class Vector2D:
 
     def rotateby(self, matrix: ndarray):
         self.__array @= matrix
+    
+    def xy(self): return self.__array[0], self.__array[1]
 
 ## 2D math
 
@@ -41,8 +43,25 @@ class Vector3D:
     def __init__(self, /, x: int, y: int, z: int):
         self.__array = array([x, y, z], dtype=float64)
 
+    def __add__(u, v):
+        return Vector3D.fromArray(u.array + v.array)
+    
+    def __iadd__(u, v):
+        u.__array += v.array
+        return u
+
+    @classmethod
+    def fromArray(cls, arr: ndarray):
+        return cls(arr[0], arr[1], arr[2])
+
+    @property
+    def array(self) -> ndarray:
+        return self.__array
+
+    def project(self) -> Vector2D:
+        return Vector2D.fromArray(self.PROJECTON @ self.__array)
+
     def draw(self, canvas: Canvas):
-        print(self.PROJECTON @ self.__array)
         Vector2D.fromArray(self.PROJECTON @ self.__array).draw(canvas)
 
     def rotateby(self, matrix: ndarray):
