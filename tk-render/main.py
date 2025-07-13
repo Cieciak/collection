@@ -1,6 +1,5 @@
 import tkinter
 
-from math import *
 from time import sleep
 from numpy import ndarray 
 
@@ -53,13 +52,15 @@ class Model:
 
     def translateby(self, v: Vector3D):
         for p in self.__points: p += v
+        return self
 
     def rotateby(self, matrix: ndarray):
         for p in self.__points: p.rotateby(matrix)
+        return self
 
 class App(tkinter.Tk):
 
-    def __init__(self, model):
+    def __init__(self, models: list[Model] | None = None):
         super().__init__()
 
         self.isRunning  = False
@@ -78,7 +79,8 @@ class App(tkinter.Tk):
         self.canvas.place(x=-2, y=-2)
         self.canvas.offset = INIT_OFFSET
 
-        self.model: Model = model
+        self.models: list[Model] = []
+        if models is not None: self.models = models 
 
     def exit(self): self.isRunning = False
 
@@ -86,13 +88,14 @@ class App(tkinter.Tk):
         self.isRunning = True
 
         while self.isRunning:
-            self.model.draw(self.canvas)
-            if self.isRotating: model.rotateby(
-                rotation_x(1/200) @ 
-                rotation_y(1/200) @ 
-                rotation_z(1/200) @ 
-                rotation_z(1/200)
-            )
+            for m in self.models:
+                m.draw(self.canvas)
+                if self.isRotating: m.rotateby(
+                    rotation_x(1/200) @ 
+                    rotation_y(1/200) @ 
+                    rotation_z(1/200) @ 
+                    rotation_z(1/200)
+                )
 
             self.update()
             self.canvas.delete('all')
@@ -103,18 +106,20 @@ class App(tkinter.Tk):
 
         match event.keysym:
             case 'Up':
-                self.model.translateby(Vector3D(0,-10, 0))
+                for m in self.models: m.translateby(Vector3D(0,-10, 0))
             case 'Down':
-                self.model.translateby(Vector3D(0, 10, 0))
+                for m in self.models: m.translateby(Vector3D(0, 10, 0))
             case 'Left':
-                self.model.translateby(Vector3D(-10,  0, 0))
+                for m in self.models: m.translateby(Vector3D(-10,  0, 0))
             case 'Right':
-                self.model.translateby(Vector3D(10,  0, 0))
+                for m in self.models: m.translateby(Vector3D(10,  0, 0))
 
             case 'r':
                 self.isRotating = not self.isRotating
 
 if __name__ == '__main__':
-    model = Model.fromFile('./objects/cube.obj')
-    app = App(model)
+    model_0 = Model.fromFile('./objects/cube.obj')
+    model_1 = Model.fromFile('./objects/pyramid.obj').translateby(Vector3D(0,-100,0))
+    model_2 = Model.fromFile('./objects/door.obj').translateby(Vector3D(0,100,100))
+    app = App([model_0, model_1, model_2])
     app.run()
