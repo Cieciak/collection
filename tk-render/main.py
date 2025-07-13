@@ -2,7 +2,7 @@ import tkinter
 
 from math import *
 from time import sleep
-from numpy import array, ndarray 
+from numpy import ndarray 
 
 from processing import Vector3D, rotation_z, rotation_y, rotation_x
 
@@ -14,6 +14,31 @@ class Model:
     def __init__(self, points: list[Vector3D] = list(), connections: list[tuple[int, int]] = list()):
         self.__points: list[Vector3D] = points
         self.__connections: list[tuple[int, int]] = connections
+
+    @classmethod
+    def fromString(cls, data: str):
+        points: list[Vector3D] = []
+        conn: list[tuple[int, int]] = []
+
+        for line in data.split('\n'):
+            if line == "": continue
+            elif line.startswith('#'): continue
+            elif line.startswith('p'):
+                point = [float(number) for number in line[2:].split(',')]
+
+                points.append(Vector3D(*point))
+            elif line.startswith('c'):
+                start, end = [int(index) for index in line[2:].split(',')]
+
+                conn.append((start,end))
+
+        return cls(points, conn)
+    
+    @classmethod
+    def fromFile(cls, filename: str):
+        with open(filename, 'r') as file: string = file.read()
+
+        return cls.fromString(string)
 
     def draw(self, canvas: tkinter.Canvas):
         for p in self.__points: p.draw(canvas)
@@ -41,7 +66,7 @@ class App(tkinter.Tk):
         self.isRotating = False
 
         self.geometry(f'{SCREEN_SIZE[0]}x{SCREEN_SIZE[1]}')
-        self.protocol('WM_DELETE_WINDOW', exit)
+        self.protocol('WM_DELETE_WINDOW', self.exit)
         self.bind('<Key>', self.key)
 
         self.canvas = tkinter.Canvas(
@@ -62,7 +87,12 @@ class App(tkinter.Tk):
 
         while self.isRunning:
             self.model.draw(self.canvas)
-            if self.isRotating: model.rotateby(rotation_x @ rotation_y @ rotation_z @ rotation_z)
+            if self.isRotating: model.rotateby(
+                rotation_x(1/200) @ 
+                rotation_y(1/200) @ 
+                rotation_z(1/200) @ 
+                rotation_z(1/200)
+            )
 
             self.update()
             self.canvas.delete('all')
@@ -84,50 +114,7 @@ class App(tkinter.Tk):
             case 'r':
                 self.isRotating = not self.isRotating
 
-# points = [
-#     Vector3D( 100,  100, -100),
-#     Vector3D( 100, -100, -100),
-#     Vector3D(-100, -100, -100),
-#     Vector3D(-100,  100, -100),
-#     Vector3D( 100,  100,  100),
-#     Vector3D( 100, -100,  100),
-#     Vector3D(-100, -100,  100),
-#     Vector3D(-100,  100,  100),
-# ]
-
-# conn = [
-#     (0, 1),
-#     (1, 2),
-#     (2, 3),
-#     (3, 0),
-#     (4, 5),
-#     (5, 6),
-#     (6, 7),
-#     (7, 4),
-#     (0, 4),
-#     (1, 5),
-#     (2, 6),
-#     (3, 7),
-# ]
-
-points = [
-    Vector3D(100, 50, 0),
-    Vector3D(-50,-50, 0),
-    Vector3D( 50,-50, 0),
-    Vector3D(  0,  0,25),
-]
-
-conn = [
-    (0, 1),
-    (1, 2),
-    (2, 0),
-    (0, 3),
-    (1, 3),
-    (2, 3),
-]
-
-
 if __name__ == '__main__':
-    model = Model(points, conn)
+    model = Model.fromFile('./objects/cube.obj')
     app = App(model)
     app.run()

@@ -43,6 +43,9 @@ class Vector3D:
     def __init__(self, /, x: int, y: int, z: int):
         self.__array = array([x, y, z], dtype=float64)
 
+    def __repr__(self):
+        return f'V3({self.array[0]}, {self.array[1]}, {self.array[2]})'
+
     def __add__(u, v):
         return Vector3D.fromArray(u.array + v.array)
     
@@ -69,22 +72,20 @@ class Vector3D:
 
 ## 3D math
 
-rotation_z = array(
-    [[cos(pi/200), -sin(pi/200), 0],
-     [sin(pi/200),  cos(pi/200), 0],
-     [          0,            0, 1],]
-)
-
-rotation_x = array(
+rotation_x = lambda radian: array(
     [[1,            0,            0],
-     [0,  cos(pi/200), -sin(pi/200)],
-     [0,  sin(pi/200),  cos(pi/200)]
-    ]
+     [0,  cos(radian), -sin(radian)],
+     [0,  sin(radian),  cos(radian)]]
 )
 
-rotation_y = array(
-    [[cos(pi/200), 0, -sin(pi/200)],
+rotation_y = lambda radian: array(
+    [[cos(radian), 0, -sin(radian)],
      [          0, 1,            0],
-     [sin(pi/200), 0,  cos(pi/200)]
-    ]
+     [sin(radian), 0,  cos(radian)]]
+)
+
+rotation_z = lambda radian: array(
+    [[cos(radian), -sin(radian), 0],
+     [sin(radian),  cos(radian), 0],
+     [          0,            0, 1],]
 )
