@@ -5,7 +5,6 @@ import funclib
 
 Footprint = namedtuple('Footprint', ['input', 'output'])
 
-
 class SolverFunction:
 
     def __init__(self, function: FunctionType, footprint: Footprint, mapping: dict = None):
@@ -39,15 +38,10 @@ class Solver:
 
     def __init__(self, functions: list[SolverFunction]):
         self.functions = functions
-        self.known = {}
 
     def __repr__(self):
         func = f'Functions:\n  ' + '\n  '.join(f.__repr__() for f in self.functions)
-        vars = f'Variables:\n  ' + '\n  '.join(f'{key}={val}' for key, val in self.known.items())
-        return func + '\n' + vars
-
-    def addVariables(self, data: dict):
-        self.known = {**self.known, **data}
+        return func
 
     def findPossible(self, using) -> list[SolverFunction]:
         candidates = []
@@ -57,7 +51,9 @@ class Solver:
 
         return candidates
     
-    def tracePath(self, inpt, outp, trace: list = list()):
+    def tracePath(self, inpt, outp, trace: list = None) -> list[SolverFunction]:
+
+        if trace is None: trace = list()
 
         paths = self.findPossible(inpt)
 
@@ -70,15 +66,30 @@ class Solver:
             m_inpt = (*inpt, p.footprint.output)
             return self.tracePath(m_inpt, outp, trace=trace)
 
+    def solve(self, inpt: dict, outp):
+        print(tuple(inpt.keys()))
+        path = self.tracePath(tuple(inpt.keys()), outp)
 
+        print(path)
+
+        m_inpt = inpt
+        for func in path:
+            outp = func(**m_inpt)
+            m_inpt = {**m_inpt, **outp}
+
+        return m_inpt
 
 if __name__ == '__main__':
 
-    f_0 = SolverFunction(funclib.areaOfTriangle, Footprint(('x', 'y'), 'z'), {'x': 'base', 'y': 'height'})
-    f_1 = SolverFunction(funclib.volume, Footprint(('z', 'y'), 'v'), {'z': 'base', 'y': 'height'})
+    f_0 = SolverFunction(funclib.add,      Footprint(('x', 'y'), 'z'), {'x': 'x', 'y': 'y'})
+    f_1 = SolverFunction(funclib.exponent, Footprint(('x',), 'a'), {'x': 'x'})
+    f_2 = SolverFunction(funclib.exponent, Footprint(('y',), 'b'), {'y': 'x'})
+    f_3 = SolverFunction(funclib.exponent, Footprint(('z',), 'c'), {'z': 'x'})
+    f_4 = SolverFunction(funclib.mul,      Footprint(('a', 'b'), 'c'), {'a': 'x', 'b': 'y'})
+    solver = Solver([f_0, f_1, f_2, f_3, f_4])
 
-    solver = Solver([f_0, f_1])
-    solver.addVariables({'x': 4, 'y': 3})
+    r = solver.tracePath(('x', 'y'), 'c')
+    print(r)
 
-    r = solver.tracePath(('x', 'y'), 'v')
+    r = solver.solve({'x': 3, 'y': 4}, 'c')
     print(r)
